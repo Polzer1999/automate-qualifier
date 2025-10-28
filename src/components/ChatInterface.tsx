@@ -17,7 +17,7 @@ export const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Bienvenue chez Parrit.ai, votre accélérateur d'efficacité. ✨\n\nDécrivez-moi les tâches répétitives qui freinent votre entreprise. Automatisons ensemble l'évasion de l'administration.",
+      content: "👋 Hey ! Je suis Parrit, votre copilote IA pour l'efficacité.\n\nDites adieu aux tâches ennuyeuses ! Mon seul objectif est de transformer vos corvées administratives et back-office en temps libre pour vous.\n\nPrêt(e) à décoller ? Décrivez simplement, ci-dessous, la tâche la plus lourde de votre semaine. Je m'occupe du plan de vol ! 🚀",
     },
   ]);
   const [input, setInput] = useState("");
@@ -170,24 +170,24 @@ export const ChatInterface = () => {
 
       <QuickReplies onSelect={handleQuickReply} isVisible={showQuickReplies} />
 
-      <form onSubmit={handleSubmit} className="p-4 border-t border-border bg-background/50"
+      <form onSubmit={handleSubmit} className="p-5 border-t border-border bg-background/80"
         style={{ backdropFilter: 'blur(10px)' }}
       >
-        <div className="flex gap-2">
+        <div className="flex gap-3 items-center">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Décrivez une tâche à automatiser (ex: gestion des factures, onboarding RH)..."
+            placeholder="Écrivez ici la tâche que vous voulez automatiser..."
             disabled={isLoading}
-            className="flex-1 rounded-full border-border focus:ring-primary text-sm"
+            className="flex-1 rounded-full border-border focus:ring-primary text-base py-6 px-5 bg-background shadow-sm placeholder:text-muted-foreground/60"
           />
           <Button
             type="submit"
             disabled={isLoading || !input.trim()}
             size="icon"
-            className="rounded-full w-10 h-10 flex-shrink-0 hover:scale-105 active:scale-95 transition-transform duration-200"
+            className="rounded-full w-12 h-12 flex-shrink-0 hover:scale-110 active:scale-95 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:hover:scale-100"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-5 h-5" />
           </Button>
         </div>
       </form>
