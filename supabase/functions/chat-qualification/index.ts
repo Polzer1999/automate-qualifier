@@ -304,7 +304,6 @@ serve(async (req) => {
 
     // Store assistant response in background
     let fullResponse = '';
-    const reader = response.body?.getReader();
     const decoder = new TextDecoder();
 
     // Create a transform stream to capture and store the response
