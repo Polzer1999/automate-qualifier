@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChatMessage } from "./ChatMessage";
 import { ChatHeader } from "./ChatHeader";
-import { QuickReplies } from "./QuickReplies";
+
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
 
@@ -17,7 +17,7 @@ export const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "👋 Hey ! Je suis Parrit, votre copilote IA pour l'efficacité.\n\nDites adieu aux tâches ennuyeuses ! Mon seul objectif est de transformer vos corvées administratives et back-office en temps libre pour vous.\n\nPrêt(e) à décoller ? Décrivez simplement, ci-dessous, la tâche la plus lourde de votre semaine. Je m'occupe du plan de vol ! 🚀",
+      content: "Quelle friction puis-je dissoudre pour vous ?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -26,7 +26,7 @@ export const ChatInterface = () => {
   const [sessionId] = useState(() => uuidv4());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [streamingMessage, setStreamingMessage] = useState("");
-  const [showQuickReplies, setShowQuickReplies] = useState(true);
+  
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -39,7 +39,6 @@ export const ChatInterface = () => {
   const sendMessage = async (message: string) => {
     if (!message.trim() || isLoading) return;
 
-    setShowQuickReplies(false);
     const userMessage = message.trim();
     setInput("");
     setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
@@ -145,15 +144,15 @@ export const ChatInterface = () => {
     await sendMessage(input);
   };
 
-  const handleQuickReply = async (message: string) => {
-    setInput(message);
-    await sendMessage(message);
-  };
 
   return (
-    <div className="w-full max-w-2xl mx-auto flex flex-col h-[650px] bg-card rounded-3xl shadow-medium overflow-hidden border border-border">
-      <ChatHeader />
-      <div className="flex-1 overflow-y-auto p-8 space-y-4 scroll-smooth"
+    <div className="w-full max-w-3xl mx-auto flex flex-col h-[680px] frosted-glass overflow-hidden"
+      style={{
+        borderRadius: '2.5rem',
+        boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05)'
+      }}
+    >
+      <div className="flex-1 overflow-y-auto p-10 space-y-6 scroll-smooth"
         style={{
           scrollbarWidth: 'thin',
           scrollbarColor: 'hsl(var(--primary) / 0.3) transparent'
@@ -168,26 +167,24 @@ export const ChatInterface = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      <QuickReplies onSelect={handleQuickReply} isVisible={showQuickReplies} />
-
-      <form onSubmit={handleSubmit} className="p-5 border-t border-border bg-background/80"
+      <form onSubmit={handleSubmit} className="p-6 border-t border-white/5"
         style={{ backdropFilter: 'blur(10px)' }}
       >
         <div className="flex gap-3 items-center">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder='« 200 factures/mois + relances » • « Onboarding 5 arrivées/mois » • « 3 rapports/sem → email »'
+            placeholder="Commencez à dissoudre..."
             disabled={isLoading}
-            className="flex-1 rounded-full border-border focus:ring-primary text-base py-6 px-5 bg-background shadow-sm placeholder:text-muted-foreground/60"
+            className="flex-1 rounded-full border-white/10 focus:ring-primary text-base py-6 px-6 bg-black/20 shadow-sm placeholder:text-primary placeholder:font-light focus:placeholder:text-primary/60 transition-all"
           />
           <Button
             type="submit"
             disabled={isLoading || !input.trim()}
             size="icon"
-            className="rounded-full w-12 h-12 flex-shrink-0 hover:scale-110 active:scale-95 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:hover:scale-100"
+            className="rounded-full w-12 h-12 flex-shrink-0 bg-primary hover:bg-primary/90 text-background hover:scale-110 active:scale-95 transition-all duration-200 shadow-lg hover:shadow-primary/20 disabled:opacity-30 disabled:hover:scale-100"
           >
-            <Send className="w-5 h-5" />
+            <span className="text-xl font-light">→</span>
           </Button>
         </div>
       </form>
