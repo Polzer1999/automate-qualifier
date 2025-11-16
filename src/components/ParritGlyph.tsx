@@ -5,7 +5,7 @@ interface ParritGlyphProps {
 
 export const ParritGlyph = ({ isThinking = false, className = "" }: ParritGlyphProps) => {
   return (
-    <div className={`relative ${className}`}>
+    <div className={`flex items-center gap-3 ${className}`}>
       <svg
         width="32"
         height="32"
@@ -42,12 +42,9 @@ export const ParritGlyph = ({ isThinking = false, className = "" }: ParritGlyphP
         />
       </svg>
       
-      {/* Label Parrit.ai sous le glyphe */}
-      <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
-        <span className="text-xs font-light tracking-wide text-foreground/80">
-          parrit.ai
-        </span>
-      </div>
+      <span className="text-sm font-light tracking-wide text-foreground/80">
+        parrit.ai
+      </span>
     </div>
   );
 };

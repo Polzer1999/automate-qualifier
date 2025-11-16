@@ -22,7 +22,7 @@ export const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Pourquoi êtes-vous face à moi aujourd'hui ?",
+      content: "À qui ai-je l'honneur ?",
     },
   ]);
   const [input, setInput] = useState("");
