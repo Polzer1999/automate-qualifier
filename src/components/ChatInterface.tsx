@@ -11,6 +11,11 @@ import { v4 as uuidv4 } from "uuid";
 interface Message {
   role: "user" | "assistant";
   content: string;
+  referenceCalls?: Array<{
+    entreprise: string;
+    secteur: string;
+    phase: string;
+  }>;
 }
 
 export const ChatInterface = () => {
@@ -75,6 +80,7 @@ export const ChatInterface = () => {
       const decoder = new TextDecoder();
       let buffer = "";
       let currentMessage = "";
+      let referenceCalls: any[] = [];
 
       while (true) {
         const { done, value } = await reader.read();
@@ -94,6 +100,13 @@ export const ChatInterface = () => {
 
           try {
             const parsed = JSON.parse(data);
+            
+            // Check for reference calls metadata
+            if (parsed.reference_calls) {
+              referenceCalls = parsed.reference_calls;
+              continue;
+            }
+            
             const content = parsed.choices?.[0]?.delta?.content;
             if (content) {
               currentMessage += content;
@@ -122,7 +135,11 @@ export const ChatInterface = () => {
       }
 
       if (currentMessage) {
-        setMessages((prev) => [...prev, { role: "assistant", content: currentMessage }]);
+        setMessages((prev) => [...prev, { 
+          role: "assistant", 
+          content: currentMessage,
+          referenceCalls: referenceCalls.length > 0 ? referenceCalls : undefined
+        }]);
       }
       setStreamingMessage("");
     } catch (error) {
@@ -159,7 +176,12 @@ export const ChatInterface = () => {
         }}
       >
         {messages.map((msg, idx) => (
-          <ChatMessage key={idx} role={msg.role} content={msg.content} />
+          <ChatMessage 
+            key={idx} 
+            role={msg.role} 
+            content={msg.content}
+            referenceCalls={msg.referenceCalls}
+          />
         ))}
         {streamingMessage && (
           <ChatMessage role="assistant" content={streamingMessage} isStreaming />

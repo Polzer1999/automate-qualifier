@@ -108,14 +108,18 @@ function extractContextFromMessages(messages: any[]): { secteur: string[]; besoi
 }
 
 // Helper function to enrich prompt with similar discovery calls
-async function enrichPromptWithDiscoveryCalls(supabase: any, messages: any[], basePrompt: string): Promise<string> {
+async function enrichPromptWithDiscoveryCalls(
+  supabase: any, 
+  messages: any[], 
+  basePrompt: string
+): Promise<{ prompt: string; referenceCalls: any[] }> {
   try {
     // Extract context from conversation
     const { secteur, besoin } = extractContextFromMessages(messages);
     
     if (secteur.length === 0 && besoin.length === 0) {
       // No context detected yet, return base prompt
-      return basePrompt;
+      return { prompt: basePrompt, referenceCalls: [] };
     }
     
     // Build query to find similar calls
@@ -135,7 +139,7 @@ async function enrichPromptWithDiscoveryCalls(supabase: any, messages: any[], ba
     
     if (error || !similarCalls || similarCalls.length === 0) {
       console.log('No similar calls found or error:', error);
-      return basePrompt;
+      return { prompt: basePrompt, referenceCalls: [] };
     }
     
     console.log(`Found ${similarCalls.length} similar discovery calls`);
@@ -166,11 +170,21 @@ async function enrichPromptWithDiscoveryCalls(supabase: any, messages: any[], ba
     
     enrichment += '**IMPORTANT:** Utilise ces techniques de Paul pour adapter ton approche de qualification. Pose des questions similaires, utilise le même style de découverte progressive, et adapte-toi au secteur comme Paul le fait.\n';
     
-    return basePrompt + enrichment;
+    // Extract reference calls metadata for transparency
+    const referenceCalls = similarCalls.map((call: any) => ({
+      entreprise: call.entreprise || 'Client',
+      secteur: call.secteur || 'Non spécifié',
+      phase: 'multiple'
+    }));
+    
+    return { 
+      prompt: basePrompt + enrichment,
+      referenceCalls
+    };
     
   } catch (error) {
     console.error('Error enriching prompt:', error);
-    return basePrompt;
+    return { prompt: basePrompt, referenceCalls: [] };
   }
 }
 
@@ -471,7 +485,11 @@ serve(async (req) => {
     if (msgError) throw msgError;
 
     // Search for similar discovery calls to enrich the prompt
-    const enrichedPrompt = await enrichPromptWithDiscoveryCalls(supabase, messages, QUALIFICATION_SYSTEM_PROMPT);
+    const { prompt: enrichedPrompt, referenceCalls } = await enrichPromptWithDiscoveryCalls(
+      supabase, 
+      messages, 
+      QUALIFICATION_SYSTEM_PROMPT
+    );
 
     // Prepare messages for AI
     const aiMessages = [
@@ -512,6 +530,18 @@ serve(async (req) => {
     // Store assistant response in background
     let fullResponse = '';
     const decoder = new TextDecoder();
+    
+    // Send reference calls metadata first if available
+    const encoder = new TextEncoder();
+    const metadataStream = new ReadableStream({
+      async start(controller) {
+        if (referenceCalls && referenceCalls.length > 0) {
+          const metadata = `data: ${JSON.stringify({ reference_calls: referenceCalls })}\n\n`;
+          controller.enqueue(encoder.encode(metadata));
+        }
+        controller.close();
+      }
+    });
 
     // Create a transform stream to capture and store the response
     const transformStream = new TransformStream({
@@ -621,7 +651,34 @@ serve(async (req) => {
       }
     });
 
-    return new Response(response.body?.pipeThrough(transformStream), {
+    // Combine metadata stream with AI response stream
+    const combinedStream = new ReadableStream({
+      async start(controller) {
+        const encoder = new TextEncoder();
+        
+        // Send reference calls metadata first
+        if (referenceCalls && referenceCalls.length > 0) {
+          const metadata = `data: ${JSON.stringify({ reference_calls: referenceCalls })}\n\n`;
+          controller.enqueue(encoder.encode(metadata));
+        }
+        
+        // Then pipe the AI response through transform
+        const reader = response.body?.pipeThrough(transformStream).getReader();
+        if (reader) {
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              controller.enqueue(value);
+            }
+          } finally {
+            controller.close();
+          }
+        }
+      }
+    });
+
+    return new Response(combinedStream, {
       headers: { 
         ...corsHeaders, 
         'Content-Type': 'text/event-stream',
