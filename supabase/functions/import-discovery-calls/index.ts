@@ -21,25 +21,34 @@ serve(async (req) => {
     
     console.log('Starting CSV import...');
     
-    // Parse CSV
-    const lines = csvData.split('\n').filter((line: string) => line.trim());
-    const header = lines[0];
+    // Parse CSV with proper multi-line field handling
+    const rows = parseCSV(csvData);
+    
+    if (rows.length === 0) {
+      console.error('No data found in CSV');
+      return new Response(
+        JSON.stringify({ error: 'No data found in CSV' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    const header = rows[0];
+    console.log(`CSV has ${rows.length - 1} data rows (excluding header)`);
     
     let imported = 0;
     let errors = 0;
     
-    for (let i = 1; i < lines.length; i++) {
+    for (let i = 1; i < rows.length; i++) {
       try {
-        // Parse CSV line handling quoted fields with commas
-        const parts = parseCsvLine(lines[i]);
+        const row = rows[i];
         
-        if (parts.length < 5) {
-          console.error(`Skipping line ${i}: insufficient columns`);
+        if (row.length < 5) {
+          console.error(`Skipping row ${i}: insufficient columns (got ${row.length}, expected 5)`);
           errors++;
           continue;
         }
         
-        const [infosClient, phase1, phase2, phase3, phase4] = parts;
+        const [infosClient, phase1, phase2, phase3, phase4] = row;
         
         // Parse infos_client to extract structured data
         const clientInfo = parseClientInfo(infosClient);
@@ -94,32 +103,60 @@ serve(async (req) => {
   }
 });
 
-// Helper function to parse CSV line with quoted fields
-function parseCsvLine(line: string): string[] {
-  const result: string[] = [];
-  let current = '';
+// Helper function to parse entire CSV with multi-line field support
+function parseCSV(csvData: string): string[][] {
+  const rows: string[][] = [];
+  let currentRow: string[] = [];
+  let currentField = '';
   let inQuotes = false;
   
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
+  for (let i = 0; i < csvData.length; i++) {
+    const char = csvData[i];
+    const nextChar = csvData[i + 1];
     
     if (char === '"') {
-      if (inQuotes && line[i + 1] === '"') {
-        current += '"';
+      if (inQuotes && nextChar === '"') {
+        // Escaped quote ("" → ")
+        currentField += '"';
         i++;
       } else {
+        // Start or end of quoted field
         inQuotes = !inQuotes;
       }
     } else if (char === ',' && !inQuotes) {
-      result.push(current.trim());
-      current = '';
+      // End of field (comma outside quotes)
+      currentRow.push(currentField.trim());
+      currentField = '';
+    } else if ((char === '\n' || char === '\r') && !inQuotes) {
+      // End of row (newline outside quotes)
+      if (char === '\r' && nextChar === '\n') {
+        // Skip \r in \r\n
+        i++;
+      }
+      if (currentField || currentRow.length > 0) {
+        currentRow.push(currentField.trim());
+        // Only add non-empty rows
+        if (currentRow.some(f => f)) {
+          rows.push(currentRow);
+        }
+        currentRow = [];
+        currentField = '';
+      }
     } else {
-      current += char;
+      // Normal character (including \n inside quotes)
+      currentField += char;
     }
   }
   
-  result.push(current.trim());
-  return result;
+  // Add last row if exists
+  if (currentField || currentRow.length > 0) {
+    currentRow.push(currentField.trim());
+    if (currentRow.some(f => f)) {
+      rows.push(currentRow);
+    }
+  }
+  
+  return rows;
 }
 
 // Helper function to parse infos_client field
