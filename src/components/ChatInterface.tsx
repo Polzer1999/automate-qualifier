@@ -22,7 +22,7 @@ export const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Bonjour cher utilisateur, c'est le clone de Paul, le fondateur de ce chatbot, qui vous parle. Afin de pouvoir mieux comprendre comment je peux vous soulager, pourriez-vous m'indiquer qui vous êtes et ce qui vous amène ?",
+      content: "Bonjour ! Je suis Parrit, un assistant de qualification basé sur les 110 appels de découverte réalisés par Paul, fondateur de Parrit.ai. Mon rôle est de comprendre vos besoins en automatisation et de vous guider vers les meilleures solutions. Pour commencer, pourriez-vous me dire qui vous êtes et ce qui vous amène aujourd'hui ?",
     },
   ]);
   const [input, setInput] = useState("");
