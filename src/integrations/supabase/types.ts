@@ -53,6 +53,7 @@ export type Database = {
           created_at: string | null
           entreprise: string | null
           id: string
+          import_batch_id: string | null
           phase_1_introduction: string | null
           phase_2_exploration: string | null
           phase_3_affinage: string | null
@@ -66,6 +67,7 @@ export type Database = {
           created_at?: string | null
           entreprise?: string | null
           id?: string
+          import_batch_id?: string | null
           phase_1_introduction?: string | null
           phase_2_exploration?: string | null
           phase_3_affinage?: string | null
@@ -79,6 +81,7 @@ export type Database = {
           created_at?: string | null
           entreprise?: string | null
           id?: string
+          import_batch_id?: string | null
           phase_1_introduction?: string | null
           phase_2_exploration?: string | null
           phase_3_affinage?: string | null
