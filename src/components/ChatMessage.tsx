@@ -1,6 +1,12 @@
 import { User, Sparkles } from "lucide-react";
 import { ParritGlyph } from "./ParritGlyph";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ChatMessageProps {
   role: "user" | "assistant";
@@ -33,19 +39,30 @@ export const ChatMessage = ({ role, content, isStreaming, referenceCalls }: Chat
         }`}
       >
         {isAssistant && referenceCalls && referenceCalls.length > 0 && (
-          <div className="flex items-center gap-2 mb-3 pb-3 border-b border-border/30">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-xs text-muted-foreground font-medium">
-              Mode Paul activé - {referenceCalls.length} appel{referenceCalls.length > 1 ? 's' : ''} similaire{referenceCalls.length > 1 ? 's' : ''} utilisé{referenceCalls.length > 1 ? 's' : ''}
-            </span>
-            <div className="flex gap-1 flex-wrap">
-              {referenceCalls.map((call, idx) => (
-                <Badge key={idx} variant="outline" className="text-xs bg-primary/5 border-primary/20">
-                  {call.entreprise} ({call.secteur})
-                </Badge>
-              ))}
-            </div>
-          </div>
+          <TooltipProvider>
+            <Tooltip delayDuration={200}>
+              <TooltipTrigger asChild>
+                <div className="inline-flex items-center gap-1.5 mb-2 px-2 py-1 rounded-md bg-primary/5 border border-primary/10 cursor-help hover:bg-primary/10 transition-colors">
+                  <Sparkles className="w-3 h-3 text-primary/70" />
+                  <span className="text-[10px] text-muted-foreground/80 font-medium tracking-wide uppercase">
+                    {referenceCalls.length} référence{referenceCalls.length > 1 ? 's' : ''}
+                  </span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" align="start" className="max-w-xs">
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium mb-2">Appels similaires utilisés :</p>
+                  <div className="flex flex-wrap gap-1">
+                    {referenceCalls.map((call, idx) => (
+                      <Badge key={idx} variant="secondary" className="text-[10px] font-normal">
+                        {call.entreprise} · {call.secteur}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
         <p className="whitespace-pre-wrap">
           {content}
