@@ -46,6 +46,48 @@ export type Database = {
           },
         ]
       }
+      discovery_calls_knowledge: {
+        Row: {
+          besoin: string | null
+          contexte: string | null
+          created_at: string | null
+          entreprise: string | null
+          id: string
+          phase_1_introduction: string | null
+          phase_2_exploration: string | null
+          phase_3_affinage: string | null
+          phase_4_next_steps: string | null
+          raw_data: Json | null
+          secteur: string | null
+        }
+        Insert: {
+          besoin?: string | null
+          contexte?: string | null
+          created_at?: string | null
+          entreprise?: string | null
+          id?: string
+          phase_1_introduction?: string | null
+          phase_2_exploration?: string | null
+          phase_3_affinage?: string | null
+          phase_4_next_steps?: string | null
+          raw_data?: Json | null
+          secteur?: string | null
+        }
+        Update: {
+          besoin?: string | null
+          contexte?: string | null
+          created_at?: string | null
+          entreprise?: string | null
+          id?: string
+          phase_1_introduction?: string | null
+          phase_2_exploration?: string | null
+          phase_3_affinage?: string | null
+          phase_4_next_steps?: string | null
+          raw_data?: Json | null
+          secteur?: string | null
+        }
+        Relationships: []
+      }
       lead_conversations: {
         Row: {
           created_at: string

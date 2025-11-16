@@ -2,3 +2,6 @@ project_id = "ugnfzogmtidjbcwlczug"
 
 [functions.chat-qualification]
 verify_jwt = false
+
+[functions.import-discovery-calls]
+verify_jwt = false

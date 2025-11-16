@@ -62,6 +62,118 @@ async function checkRateLimit(supabase: any, sessionId: string): Promise<{ allow
   }
 }
 
+// Helper function to extract secteur/besoin from conversation
+function extractContextFromMessages(messages: any[]): { secteur: string[]; besoin: string[] } {
+  const allText = messages.map(m => m.content).join(' ').toLowerCase();
+  
+  // Common secteur keywords
+  const secteurKeywords = {
+    'énergie': ['énergie', 'renouvelable', 'solaire', 'éolien', 'électricité'],
+    'retail': ['retail', 'commerce', 'vente', 'magasin', 'e-commerce'],
+    'finance': ['finance', 'banque', 'assurance', 'fintech'],
+    'santé': ['santé', 'médical', 'hôpital', 'pharma'],
+    'tech': ['tech', 'software', 'saas', 'it', 'digital'],
+    'industrie': ['industrie', 'manufacture', 'production', 'usine'],
+    'logistique': ['logistique', 'transport', 'supply chain'],
+    'rh': ['rh', 'ressources humaines', 'recrutement', 'formation']
+  };
+  
+  // Common besoin keywords
+  const besoinKeywords = {
+    'automatisation': ['automatisation', 'automatiser', 'automation'],
+    'veille': ['veille', 'scouting', 'monitoring', 'surveillance'],
+    'qualification': ['qualification', 'qualifier', 'leads'],
+    'reporting': ['reporting', 'rapport', 'dashboard', 'kpi'],
+    'data': ['data', 'données', 'database', 'analytics']
+  };
+  
+  const detectedSecteurs: string[] = [];
+  const detectedBesoins: string[] = [];
+  
+  // Detect secteurs
+  for (const [secteur, keywords] of Object.entries(secteurKeywords)) {
+    if (keywords.some(kw => allText.includes(kw))) {
+      detectedSecteurs.push(secteur);
+    }
+  }
+  
+  // Detect besoins
+  for (const [besoin, keywords] of Object.entries(besoinKeywords)) {
+    if (keywords.some(kw => allText.includes(kw))) {
+      detectedBesoins.push(besoin);
+    }
+  }
+  
+  return { secteur: detectedSecteurs, besoin: detectedBesoins };
+}
+
+// Helper function to enrich prompt with similar discovery calls
+async function enrichPromptWithDiscoveryCalls(supabase: any, messages: any[], basePrompt: string): Promise<string> {
+  try {
+    // Extract context from conversation
+    const { secteur, besoin } = extractContextFromMessages(messages);
+    
+    if (secteur.length === 0 && besoin.length === 0) {
+      // No context detected yet, return base prompt
+      return basePrompt;
+    }
+    
+    // Build query to find similar calls
+    let query = supabase
+      .from('discovery_calls_knowledge')
+      .select('*')
+      .limit(3);
+    
+    // Filter by secteur if detected
+    if (secteur.length > 0) {
+      // Use OR condition for multiple secteurs
+      const secteurConditions = secteur.map(s => `secteur.ilike.%${s}%`).join(',');
+      query = query.or(secteurConditions);
+    }
+    
+    const { data: similarCalls, error } = await query;
+    
+    if (error || !similarCalls || similarCalls.length === 0) {
+      console.log('No similar calls found or error:', error);
+      return basePrompt;
+    }
+    
+    console.log(`Found ${similarCalls.length} similar discovery calls`);
+    
+    // Build enrichment section
+    let enrichment = '\n\n## MÉTHODE DE PAUL (basée sur ses appels de découverte réels)\n\n';
+    enrichment += `Contexte détecté: ${secteur.join(', ')} | ${besoin.join(', ')}\n\n`;
+    
+    similarCalls.forEach((call: any, idx: number) => {
+      enrichment += `### Appel ${idx + 1}: ${call.entreprise || 'Client'}\n`;
+      enrichment += `Secteur: ${call.secteur || 'Non spécifié'}\n`;
+      enrichment += `Besoin: ${call.besoin?.substring(0, 150) || 'Non spécifié'}...\n\n`;
+      
+      if (call.phase_1_introduction) {
+        enrichment += `**Phase Introduction (méthode Paul):**\n${call.phase_1_introduction.substring(0, 300)}...\n\n`;
+      }
+      
+      if (call.phase_2_exploration) {
+        enrichment += `**Phase Exploration (méthode Paul):**\n${call.phase_2_exploration.substring(0, 300)}...\n\n`;
+      }
+      
+      if (call.phase_3_affinage) {
+        enrichment += `**Phase Affinage (méthode Paul):**\n${call.phase_3_affinage.substring(0, 300)}...\n\n`;
+      }
+      
+      enrichment += '---\n\n';
+    });
+    
+    enrichment += '**IMPORTANT:** Utilise ces techniques de Paul pour adapter ton approche de qualification. Pose des questions similaires, utilise le même style de découverte progressive, et adapte-toi au secteur comme Paul le fait.\n';
+    
+    return basePrompt + enrichment;
+    
+  } catch (error) {
+    console.error('Error enriching prompt:', error);
+    return basePrompt;
+  }
+}
+
 const QUALIFICATION_SYSTEM_PROMPT = `Tu es Parrit, copilote d'onboarding pour Parrit.ai.
 Ta mission : transformer une demande d'automatisation en blueprint exploitable + estimations de ROI + prochaines étapes cliquables.
 
@@ -358,9 +470,12 @@ serve(async (req) => {
 
     if (msgError) throw msgError;
 
+    // Search for similar discovery calls to enrich the prompt
+    const enrichedPrompt = await enrichPromptWithDiscoveryCalls(supabase, messages, QUALIFICATION_SYSTEM_PROMPT);
+
     // Prepare messages for AI
     const aiMessages = [
-      { role: 'system', content: QUALIFICATION_SYSTEM_PROMPT },
+      { role: 'system', content: enrichedPrompt },
       ...messages.map(m => ({ role: m.role, content: m.content }))
     ];
 
