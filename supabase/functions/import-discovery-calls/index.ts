@@ -21,6 +21,9 @@ serve(async (req) => {
     
     console.log('Starting CSV import...');
     
+    // Generate a unique batch ID for this import session
+    const batchId = crypto.randomUUID();
+    
     // Parse CSV with proper multi-line field handling
     const rows = parseCSV(csvData);
     
@@ -64,6 +67,7 @@ serve(async (req) => {
             phase_2_exploration: phase2,
             phase_3_affinage: phase3,
             phase_4_next_steps: phase4,
+            import_batch_id: batchId,
             raw_data: {
               infos_client: infosClient,
               line_number: i

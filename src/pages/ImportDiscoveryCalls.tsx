@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,10 +16,52 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
+interface ImportBatch {
+  import_batch_id: string;
+  created_at: string;
+  count: number;
+}
+
 const ImportDiscoveryCalls = () => {
   const [importing, setImporting] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [result, setResult] = useState<{ imported: number; errors: number } | null>(null);
+  const [importBatches, setImportBatches] = useState<ImportBatch[]>([]);
+
+  useEffect(() => {
+    loadImportBatches();
+  }, []);
+
+  const loadImportBatches = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('discovery_calls_knowledge')
+        .select('import_batch_id, created_at')
+        .not('import_batch_id', 'is', null)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Group by import_batch_id and count
+      const batches = data.reduce((acc: ImportBatch[], item) => {
+        const existing = acc.find(b => b.import_batch_id === item.import_batch_id);
+        if (existing) {
+          existing.count++;
+        } else {
+          acc.push({
+            import_batch_id: item.import_batch_id,
+            created_at: item.created_at,
+            count: 1
+          });
+        }
+        return acc;
+      }, []);
+
+      setImportBatches(batches);
+    } catch (error) {
+      console.error('Error loading import batches:', error);
+    }
+  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -41,6 +83,7 @@ const ImportDiscoveryCalls = () => {
 
       setResult(data);
       toast.success(`Import réussi ! ${data.imported} appels importés`);
+      await loadImportBatches(); // Refresh the list
       
     } catch (error) {
       console.error('Import error:', error);
@@ -50,23 +93,24 @@ const ImportDiscoveryCalls = () => {
     }
   };
 
-  const handleDeleteAll = async () => {
-    setDeleting(true);
+  const handleDeleteBatch = async (batchId: string) => {
+    setDeleting(batchId);
     try {
       const { error } = await supabase
         .from('discovery_calls_knowledge')
         .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all rows
+        .eq('import_batch_id', batchId);
       
       if (error) throw error;
       
-      toast.success('Tous les imports ont été supprimés');
+      toast.success('Import supprimé avec succès');
+      await loadImportBatches(); // Refresh the list
       setResult(null);
     } catch (error) {
       console.error('Delete error:', error);
       toast.error('Erreur lors de la suppression');
     } finally {
-      setDeleting(false);
+      setDeleting(null);
     }
   };
 
@@ -74,42 +118,10 @@ const ImportDiscoveryCalls = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader>
-          <div className="flex items-start justify-between">
-            <div>
-              <CardTitle>Import des appels de découverte</CardTitle>
-              <CardDescription>
-                Importez le fichier CSV contenant vos 103 appels de découverte pour enrichir Parrit avec votre méthode de qualification.
-              </CardDescription>
-            </div>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  disabled={deleting}
-                  className="text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  {deleting ? 'Suppression...' : 'Supprimer tout'}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Supprimer tous les imports ?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Cette action supprimera définitivement tous les appels de découverte importés. 
-                    Vous pourrez réimporter le fichier CSV par la suite.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Annuler</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                    Supprimer
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
+          <CardTitle>Import des appels de découverte</CardTitle>
+          <CardDescription>
+            Importez le fichier CSV contenant vos 103 appels de découverte pour enrichir Parrit avec votre méthode de qualification.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
@@ -161,6 +173,56 @@ const ImportDiscoveryCalls = () => {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {importBatches.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="font-medium">Imports existants</h3>
+              <div className="space-y-2">
+                {importBatches.map((batch) => (
+                  <div 
+                    key={batch.import_batch_id} 
+                    className="flex items-center justify-between p-3 border rounded-lg"
+                  >
+                    <div>
+                      <p className="font-medium">{batch.count} appels</p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(batch.created_at).toLocaleString('fr-FR')}
+                      </p>
+                    </div>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          disabled={deleting === batch.import_batch_id}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Supprimer cet import ?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Cette action supprimera définitivement les {batch.count} appels de cet import.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Annuler</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => handleDeleteBatch(batch.import_batch_id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Supprimer
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
