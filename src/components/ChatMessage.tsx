@@ -24,7 +24,7 @@ export const ChatMessage = ({ role, content, isStreaming, referenceCalls }: Chat
 
   return (
     <div
-      className={`flex gap-4 mb-6 animate-fade-in ${
+      className={`flex gap-4 mb-6 ${
         isAssistant ? "justify-start" : "justify-end"
       }`}
     >

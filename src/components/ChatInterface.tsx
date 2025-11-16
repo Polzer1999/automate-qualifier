@@ -176,12 +176,17 @@ export const ChatInterface = () => {
         }}
       >
         {messages.map((msg, idx) => (
-          <ChatMessage 
-            key={idx} 
-            role={msg.role} 
-            content={msg.content}
-            referenceCalls={msg.referenceCalls}
-          />
+          <div 
+            key={idx}
+            className={idx === 0 ? "animate-fade-in" : ""}
+            style={idx === 0 ? { animationDelay: '300ms', animationDuration: '800ms' } : {}}
+          >
+            <ChatMessage 
+              role={msg.role} 
+              content={msg.content}
+              referenceCalls={msg.referenceCalls}
+            />
+          </div>
         ))}
         {streamingMessage && (
           <ChatMessage role="assistant" content={streamingMessage} isStreaming />
