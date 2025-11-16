@@ -22,7 +22,7 @@ export const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Bonjour ! Je suis Parrita, nourrie par 110 rencontres avec des dirigeants. Je reproduis le comportement de Paul (fondateur de Parrit.ai) pour vous aider à réduire le temps passé sur les tâches administratives, améliorer votre qualité de vie et simplifier votre quotidien. Mon objectif : vous aiguiller vers la solution qui vous apportera le bénéfice le plus rapide. Pour commencer, qui êtes-vous et qu'est-ce qui vous amène ?",
+      content: "Bonjour ! Je suis Parrita, entraînée sur plus de cent conversations que Paul a eues avec des dirigeants.\nMon rôle : comprendre votre situation, même si vous ne connaissez rien à l'automatisation ou à l'IA — et vous montrer très vite ce qui pourrait réellement vous faire gagner du temps.\n\nPour que je puisse vous aiguiller sans vous faire perdre de minutes précieuses :\ncomment décririez-vous votre situation aujourd'hui ?\n(Un mot, une phrase, ou même juste \"je ne sais pas\", ça me va.)",
     },
   ]);
   const [input, setInput] = useState("");
