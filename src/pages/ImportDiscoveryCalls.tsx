@@ -120,7 +120,7 @@ const ImportDiscoveryCalls = () => {
         <CardHeader>
           <CardTitle>Import des appels de découverte</CardTitle>
           <CardDescription>
-            Importez le fichier CSV contenant vos 103 appels de découverte pour enrichir Parrit avec votre méthode de qualification.
+            Importez vos appels de découverte au format CSV pour enrichir Parrit avec votre méthode de qualification.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -142,7 +142,7 @@ const ImportDiscoveryCalls = () => {
               />
             </label>
             <p className="mt-2 text-sm text-muted-foreground">
-              Format attendu: Comment_découvrir_-_Super_Paul.csv
+              Format CSV avec colonnes: infos_client, phase_1, phase_2, phase_3, phase_4
             </p>
           </div>
 
@@ -229,9 +229,9 @@ const ImportDiscoveryCalls = () => {
           <div className="bg-muted p-4 rounded-lg space-y-2">
             <h3 className="font-semibold text-sm">Comment ça marche ?</h3>
             <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
-              <li>Parrit analyse vos 103 appels de découverte</li>
+              <li>Parrit analyse vos appels de découverte importés</li>
               <li>Détecte automatiquement le secteur et le besoin du prospect</li>
-              <li>Trouve les 3 appels les plus similaires dans votre historique</li>
+              <li>Trouve les appels les plus similaires dans votre historique</li>
               <li>Adapte ses questions en fonction de votre méthode</li>
               <li>Qualifie exactement comme vous le feriez</li>
             </ol>
