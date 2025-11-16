@@ -3,10 +3,22 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Upload, CheckCircle2, XCircle } from 'lucide-react';
+import { Upload, CheckCircle2, XCircle, Trash2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 const ImportDiscoveryCalls = () => {
   const [importing, setImporting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [result, setResult] = useState<{ imported: number; errors: number } | null>(null);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,14 +50,66 @@ const ImportDiscoveryCalls = () => {
     }
   };
 
+  const handleDeleteAll = async () => {
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('discovery_calls_knowledge')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all rows
+      
+      if (error) throw error;
+      
+      toast.success('Tous les imports ont été supprimés');
+      setResult(null);
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast.error('Erreur lors de la suppression');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader>
-          <CardTitle>Import des appels de découverte</CardTitle>
-          <CardDescription>
-            Importez le fichier CSV contenant vos 103 appels de découverte pour enrichir Parrit avec votre méthode de qualification.
-          </CardDescription>
+          <div className="flex items-start justify-between">
+            <div>
+              <CardTitle>Import des appels de découverte</CardTitle>
+              <CardDescription>
+                Importez le fichier CSV contenant vos 103 appels de découverte pour enrichir Parrit avec votre méthode de qualification.
+              </CardDescription>
+            </div>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  disabled={deleting}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  {deleting ? 'Suppression...' : 'Supprimer tout'}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Supprimer tous les imports ?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Cette action supprimera définitivement tous les appels de découverte importés. 
+                    Vous pourrez réimporter le fichier CSV par la suite.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Supprimer
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
