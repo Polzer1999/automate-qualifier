@@ -22,7 +22,7 @@ export const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Bonjour ! Je suis Parrita, entraînée sur plus de cent conversations que Paul a eues avec des dirigeants.\nMon rôle : comprendre votre situation, même si vous ne connaissez rien à l'automatisation ou à l'IA — et vous montrer très vite ce qui pourrait réellement vous faire gagner du temps.\n\nPour que je puisse vous aiguiller sans vous faire perdre de minutes précieuses :\ncomment décririez-vous votre situation aujourd'hui ?\n(Un mot, une phrase, ou même juste \"je ne sais pas\", ça me va.)",
+      content: "Bonjour, je suis Parrita. Je vous aide à identifier ce qui peut être simplifié ou automatisé dans votre quotidien professionnel — même si vous partez de zéro.\n\nÉcrivez librement ce que vous souhaitez améliorer, clarifier ou fluidifier. Je m'adapte à vous.",
     },
   ]);
   const [input, setInput] = useState("");
@@ -201,7 +201,7 @@ export const ChatInterface = () => {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Commencez à dissoudre..."
+            placeholder="Décrivez ce que vous souhaitez simplifier, améliorer ou automatiser…"
             disabled={isLoading}
             className="flex-1 rounded-full border-white/10 focus:ring-primary text-base py-6 px-6 bg-black/20 shadow-sm placeholder:text-primary placeholder:font-light focus:placeholder:text-primary/60 transition-all"
           />
