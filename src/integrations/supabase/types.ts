@@ -148,6 +148,66 @@ export type Database = {
         }
         Relationships: []
       }
+      parrita_leads: {
+        Row: {
+          calcom_link_clicked: boolean | null
+          context_summary: string | null
+          created_at: string | null
+          estimated_time_spent_per_week_hours: number | null
+          iai_maturity_level: number | null
+          id: string
+          interest_level: string | null
+          lead_company: string | null
+          lead_company_size: string | null
+          lead_email: string | null
+          lead_name: string | null
+          lead_phone: string | null
+          lead_role: string | null
+          lead_sector: string | null
+          main_pain_points: Json | null
+          preferred_next_step: string | null
+          tasks_to_automate: Json | null
+        }
+        Insert: {
+          calcom_link_clicked?: boolean | null
+          context_summary?: string | null
+          created_at?: string | null
+          estimated_time_spent_per_week_hours?: number | null
+          iai_maturity_level?: number | null
+          id?: string
+          interest_level?: string | null
+          lead_company?: string | null
+          lead_company_size?: string | null
+          lead_email?: string | null
+          lead_name?: string | null
+          lead_phone?: string | null
+          lead_role?: string | null
+          lead_sector?: string | null
+          main_pain_points?: Json | null
+          preferred_next_step?: string | null
+          tasks_to_automate?: Json | null
+        }
+        Update: {
+          calcom_link_clicked?: boolean | null
+          context_summary?: string | null
+          created_at?: string | null
+          estimated_time_spent_per_week_hours?: number | null
+          iai_maturity_level?: number | null
+          id?: string
+          interest_level?: string | null
+          lead_company?: string | null
+          lead_company_size?: string | null
+          lead_email?: string | null
+          lead_name?: string | null
+          lead_phone?: string | null
+          lead_role?: string | null
+          lead_sector?: string | null
+          main_pain_points?: Json | null
+          preferred_next_step?: string | null
+          tasks_to_automate?: Json | null
+        }
+        Relationships: []
+      }
       rate_limits: {
         Row: {
           created_at: string | null
