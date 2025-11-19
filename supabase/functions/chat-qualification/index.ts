@@ -132,6 +132,55 @@ function extractContextFromMessages(messages: any[]): { secteur: string[]; besoi
   return { secteur: detectedSecteurs, besoin: detectedBesoins, role: detectedRoles };
 }
 
+// Helper function to build enrichment text (extracted for reusability)
+function buildEnrichment(
+  basePrompt: string, 
+  calls: any[], 
+  secteur: string[], 
+  besoin: string[], 
+  role: string[]
+): { prompt: string; referenceCalls: any[] } {
+  let enrichment = '\n\n## MÉTHODE DE PAUL - Appels similaires détectés\n\n';
+  enrichment += `**Contexte identifié:** ${secteur.join(', ')}${besoin.length > 0 ? ' | ' + besoin.join(', ') : ''}${role.length > 0 ? ' | Rôle: ' + role.join(', ') : ''}\n\n`;
+  
+  calls.forEach((call: any, idx: number) => {
+    enrichment += `### Appel ${idx + 1}: ${call.entreprise || 'Client'}\n`;
+    enrichment += `**Secteur:** ${call.secteur || 'Non spécifié'} | **Besoin:** ${call.besoin?.substring(0, 100) || 'Non spécifié'}...\n\n`;
+    
+    if (call.phase_1_introduction) {
+      enrichment += `**Phase 1 - Introduction:**\n${call.phase_1_introduction.substring(0, 350)}...\n\n`;
+    }
+    
+    if (call.phase_2_exploration) {
+      enrichment += `**Phase 2 - Exploration:**\n${call.phase_2_exploration.substring(0, 350)}...\n\n`;
+    }
+    
+    if (call.phase_3_affinage) {
+      enrichment += `**Phase 3 - Affinage:**\n${call.phase_3_affinage.substring(0, 350)}...\n\n`;
+    }
+    
+    if (call.phase_4_next_steps) {
+      enrichment += `**Phase 4 - Next Steps:**\n${call.phase_4_next_steps.substring(0, 250)}...\n\n`;
+    }
+    
+    enrichment += '---\n\n';
+  });
+  
+  enrichment += '**INSTRUCTION:** Inspire-toi de ces méthodes pour conduire la qualification. Adapte ton approche au contexte spécifique.\n';
+  
+  // Prepare reference calls for UI badges
+  const referenceCalls = calls.map(call => ({
+    entreprise: call.entreprise,
+    secteur: call.secteur,
+    besoin: call.besoin
+  }));
+  
+  return { 
+    prompt: basePrompt + enrichment,
+    referenceCalls 
+  };
+}
+
 // Helper function to enrich prompt with similar discovery calls
 async function enrichPromptWithDiscoveryCalls(
   supabase: any, 
@@ -184,67 +233,84 @@ async function enrichPromptWithDiscoveryCalls(
     // CONTEXT DETECTED: Find 3 most similar calls with ALL phases
     console.log('Context detected - finding similar discovery calls');
     
-    // Build query to find similar calls
+    // Build query with multi-criteria filtering + randomization
     let query = supabase
       .from('discovery_calls_knowledge')
-      .select('*')
-      .limit(3);
+      .select('*');
     
-    // Filter by secteur if detected
+    // PRIORITY 1: Filter by besoin (need) - most relevant criterion
+    if (besoin.length > 0) {
+      const besoinConditions = besoin.map(b => `besoin.ilike.%${b}%`).join(',');
+      query = query.or(besoinConditions);
+      console.log(`Filtering by needs: ${besoin.join(', ')}`);
+    }
+    
+    // PRIORITY 2: Add secteur filter (business context)
     if (secteur.length > 0) {
       const secteurConditions = secteur.map(s => `secteur.ilike.%${s}%`).join(',');
-      query = query.or(secteurConditions);
+      
+      // If besoin filter exists, add secteur as additional condition
+      if (besoin.length > 0) {
+        query = query.or(secteurConditions);
+      } else {
+        // If no besoin, secteur becomes primary filter
+        query = query.or(secteurConditions);
+      }
+      
+      console.log(`Filtering by sectors: ${secteur.join(', ')}`);
     }
+    
+    // RANDOMIZATION: Vary results to avoid showing same calls every time
+    query = query.order('random()').limit(3);
     
     const { data: similarCalls, error } = await query;
     
-    if (error || !similarCalls || similarCalls.length === 0) {
-      console.log('No similar calls found or error:', error);
+    // FALLBACK 1: If no results with besoin filter, retry with secteur only
+    if (!similarCalls || similarCalls.length === 0) {
+      console.log('No calls found with besoin+secteur filter, retrying with secteur only...');
+      
+      if (secteur.length > 0) {
+        const fallbackQuery = supabase
+          .from('discovery_calls_knowledge')
+          .select('*')
+          .or(secteur.map(s => `secteur.ilike.%${s}%`).join(','))
+          .order('random()')
+          .limit(3);
+        
+        const { data: fallbackCalls } = await fallbackQuery;
+        
+        if (fallbackCalls && fallbackCalls.length > 0) {
+          console.log(`Found ${fallbackCalls.length} calls with secteur-only fallback`);
+          return buildEnrichment(basePrompt, fallbackCalls, secteur, besoin, role);
+        }
+      }
+      
+      // FALLBACK 2: Ultimate fallback - random 3 calls
+      console.log('Using random calls as ultimate fallback');
+      const { data: randomCalls } = await supabase
+        .from('discovery_calls_knowledge')
+        .select('*')
+        .order('random()')
+        .limit(3);
+      
+      if (randomCalls && randomCalls.length > 0) {
+        return buildEnrichment(basePrompt, randomCalls, secteur, besoin, role);
+      }
+      
+      // No calls at all - return base prompt
+      console.log('No discovery calls found in database');
+      return { prompt: basePrompt, referenceCalls: [] };
+    }
+    
+    if (error) {
+      console.error('Error fetching discovery calls:', error);
       return { prompt: basePrompt, referenceCalls: [] };
     }
     
     console.log(`Found ${similarCalls.length} similar discovery calls with full phases`);
     
-    // Build enrichment section with ALL phases
-    let enrichment = '\n\n## MÉTHODE DE PAUL - Appels similaires détectés\n\n';
-    enrichment += `**Contexte identifié:** ${secteur.join(', ')}${besoin.length > 0 ? ' | ' + besoin.join(', ') : ''}${role.length > 0 ? ' | Rôle: ' + role.join(', ') : ''}\n\n`;
-    
-    similarCalls.forEach((call: any, idx: number) => {
-      enrichment += `### Appel ${idx + 1}: ${call.entreprise || 'Client'}\n`;
-      enrichment += `**Secteur:** ${call.secteur || 'Non spécifié'} | **Besoin:** ${call.besoin?.substring(0, 100) || 'Non spécifié'}...\n\n`;
-      
-      if (call.phase_1_introduction) {
-        enrichment += `**Phase 1 - Introduction:**\n${call.phase_1_introduction.substring(0, 350)}...\n\n`;
-      }
-      
-      if (call.phase_2_exploration) {
-        enrichment += `**Phase 2 - Exploration:**\n${call.phase_2_exploration.substring(0, 350)}...\n\n`;
-      }
-      
-      if (call.phase_3_affinage) {
-        enrichment += `**Phase 3 - Affinage:**\n${call.phase_3_affinage.substring(0, 350)}...\n\n`;
-      }
-      
-      if (call.phase_4_next_steps) {
-        enrichment += `**Phase 4 - Next Steps:**\n${call.phase_4_next_steps.substring(0, 200)}...\n\n`;
-      }
-      
-      enrichment += '---\n\n';
-    });
-    
-    enrichment += '**INSTRUCTION CLEF:** Utilise la progression de Paul (phases 1→2→3→4). Adapte tes questions au secteur et au besoin détecté. Pose UNE question à la fois.\n';
-    
-    // Extract reference calls metadata for transparency
-    const referenceCalls = similarCalls.map((call: any) => ({
-      entreprise: call.entreprise || 'Client',
-      secteur: call.secteur || 'Non spécifié',
-      phase: 'toutes phases'
-    }));
-    
-    return { 
-      prompt: basePrompt + enrichment,
-      referenceCalls
-    };
+    // Use helper function to build enrichment
+    return buildEnrichment(basePrompt, similarCalls, secteur, besoin, role);
     
   } catch (error) {
     console.error('Error enriching prompt:', error);
