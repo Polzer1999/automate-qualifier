@@ -142,7 +142,8 @@ async function enrichPromptWithDiscoveryCalls(
     // Extract context from conversation
     const { secteur, besoin, role } = extractContextFromMessages(messages);
     
-    const hasContext = secteur.length > 0 || besoin.length > 0 || role.length > 0;
+    // Only trigger enrichment when a specific NEED is detected
+    const hasContext = besoin.length > 0;
     
     if (!hasContext) {
       // NO CONTEXT YET: Return 5-7 random calls with ONLY phase_1_introduction

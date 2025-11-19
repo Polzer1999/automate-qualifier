@@ -42,21 +42,28 @@ serve(async (req) => {
   }
 
   try {
-    const { audio } = await req.json();
+    const { audio, mimeType = 'audio/webm' } = await req.json();
     
     if (!audio) {
       throw new Error('No audio data provided');
     }
 
     console.log('Processing audio transcription request...');
+    console.log(`Audio size: ${audio.length} chars, MIME type: ${mimeType}`);
 
     // Process audio in chunks to avoid memory issues
     const binaryAudio = processBase64Chunks(audio);
+    console.log(`Decoded audio size: ${binaryAudio.length} bytes`);
     
     // Prepare form data for OpenAI Whisper API
     const formData = new FormData();
-    const blob = new Blob([binaryAudio], { type: 'audio/webm' });
-    formData.append('file', blob, 'audio.webm');
+    const blob = new Blob([binaryAudio], { type: mimeType });
+    
+    // Use appropriate file extension based on MIME type
+    const extension = mimeType.includes('mp4') ? 'mp4' : 
+                      mimeType.includes('ogg') ? 'ogg' : 'webm';
+    
+    formData.append('file', blob, `audio.${extension}`);
     formData.append('model', 'whisper-1');
     formData.append('language', 'fr');
 
@@ -78,6 +85,7 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('OpenAI API error:', response.status, errorText);
+      console.error(`Audio details: ${binaryAudio.length} bytes, ${mimeType}`);
       throw new Error(`OpenAI API error: ${errorText}`);
     }
 

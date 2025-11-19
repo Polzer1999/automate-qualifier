@@ -14,16 +14,32 @@ export const VoiceRecorder = ({ onTranscriptionComplete, disabled }: VoiceRecord
   const [isProcessing, setIsProcessing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const recordingStartTimeRef = useRef<number | null>(null);
+  const mimeTypeRef = useRef<string>('audio/webm');
   const { toast } = useToast();
+
+  const getSupportedMimeType = () => {
+    const types = ['audio/webm', 'audio/mp4', 'audio/ogg'];
+    for (const type of types) {
+      if (MediaRecorder.isTypeSupported(type)) {
+        return type;
+      }
+    }
+    return 'audio/webm'; // fallback
+  };
 
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = getSupportedMimeType();
+      mimeTypeRef.current = mimeType;
+      
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm',
+        mimeType: mimeType,
       });
 
       chunksRef.current = [];
+      recordingStartTimeRef.current = Date.now();
 
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
@@ -54,8 +70,27 @@ export const VoiceRecorder = ({ onTranscriptionComplete, disabled }: VoiceRecord
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
+      const duration = Date.now() - (recordingStartTimeRef.current || 0);
+      
+      // OpenAI Whisper requires minimum 0.1s, we enforce 0.5s for better quality
+      if (duration < 500) {
+        toast({
+          title: "Enregistrement trop court",
+          description: "Maintenez le bouton appuyé au moins une demi-seconde.",
+          variant: "destructive",
+        });
+        
+        // Cancel recording without processing
+        mediaRecorderRef.current.stop();
+        setIsRecording(false);
+        recordingStartTimeRef.current = null;
+        chunksRef.current = [];
+        return;
+      }
+      
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+      recordingStartTimeRef.current = null;
     }
   };
 
@@ -76,9 +111,12 @@ export const VoiceRecorder = ({ onTranscriptionComplete, disabled }: VoiceRecord
         reader.onerror = reject;
       });
 
-      // Call voice-to-text edge function
+      // Call voice-to-text edge function with MIME type
       const { data, error } = await supabase.functions.invoke('voice-to-text', {
-        body: { audio: base64Audio }
+        body: { 
+          audio: base64Audio,
+          mimeType: mimeTypeRef.current 
+        }
       });
 
       if (error) throw error;
@@ -138,7 +176,7 @@ export const VoiceRecorder = ({ onTranscriptionComplete, disabled }: VoiceRecord
           ? 'bg-destructive text-destructive-foreground animate-pulse' 
           : ''
       }`}
-      title="Appuyez et maintenez pour parler"
+      title="Appuyez et maintenez au moins 0.5s pour parler"
     >
       {isProcessing ? (
         <Loader2 className="h-4 w-4 animate-spin" />
