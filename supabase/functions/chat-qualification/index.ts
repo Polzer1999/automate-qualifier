@@ -551,11 +551,20 @@ serve(async (req) => {
       content: message
     });
 
-    // Get conversation history
+    // Get ALL conversation history for this sessionId (across all conversations)
+    // This gives the AI full context of past interactions with this user
+    const { data: allConversations } = await supabase
+      .from('lead_conversations')
+      .select('id')
+      .eq('session_id', sessionId)
+      .order('created_at', { ascending: true });
+
+    const conversationIds = allConversations?.map(c => c.id) || [convId];
+
     const { data: messages, error: msgError } = await supabase
       .from('chat_messages')
       .select('*')
-      .eq('conversation_id', convId)
+      .in('conversation_id', conversationIds)
       .order('created_at', { ascending: true });
 
     if (msgError) throw msgError;

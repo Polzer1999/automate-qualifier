@@ -28,7 +28,14 @@ export const ChatInterface = () => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
-  const [sessionId] = useState(() => uuidv4());
+  const [sessionId] = useState(() => {
+    // Persist sessionId in localStorage to maintain user context across page reloads
+    const stored = localStorage.getItem('parrita_session_id');
+    if (stored) return stored;
+    const newId = uuidv4();
+    localStorage.setItem('parrita_session_id', newId);
+    return newId;
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [streamingMessage, setStreamingMessage] = useState("");
   
