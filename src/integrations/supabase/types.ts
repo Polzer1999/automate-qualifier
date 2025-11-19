@@ -96,6 +96,7 @@ export type Database = {
           created_at: string
           id: string
           is_qualified: boolean | null
+          lead_id: string | null
           qualification_data: Json | null
           session_id: string
           updated_at: string
@@ -104,6 +105,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_qualified?: boolean | null
+          lead_id?: string | null
           qualification_data?: Json | null
           session_id: string
           updated_at?: string
@@ -112,11 +114,20 @@ export type Database = {
           created_at?: string
           id?: string
           is_qualified?: boolean | null
+          lead_id?: string | null
           qualification_data?: Json | null
           session_id?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "lead_conversations_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "parrita_leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       n8n_webhooks: {
         Row: {

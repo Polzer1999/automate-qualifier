@@ -651,18 +651,73 @@ serve(async (req) => {
             content: fullResponse
           });
 
-          // Update conversation with qualification data if detected
-          // Simple heuristic: if we have email, consider it qualified
-          if (fullResponse.toLowerCase().includes('@') || messages.length > 8) {
-            await supabase
-              .from('lead_conversations')
-              .update({ 
-                is_qualified: true,
-                qualification_data: { messages: messages.length, timestamp: new Date().toISOString() }
-              })
-              .eq('id', convId);
+          // Try to extract and parse internal JSON from Parrita's response
+          let parsedLeadData = null;
+          let leadId = null;
+          
+          try {
+            // Look for JSON block in the response (between ```json and ``` or standalone)
+            const jsonMatch = fullResponse.match(/```json\s*(\{[\s\S]*?\})\s*```/) || 
+                            fullResponse.match(/(\{[\s\S]*?"lead_name"[\s\S]*?\})/);
             
-            // Trigger n8n webhooks for qualified conversation
+            if (jsonMatch) {
+              const jsonString = jsonMatch[1];
+              console.log('Found JSON block in response:', jsonString.substring(0, 200));
+              parsedLeadData = JSON.parse(jsonString);
+              console.log('Parsed lead data:', JSON.stringify(parsedLeadData, null, 2));
+              
+              // Validate that we have meaningful qualification data
+              const hasEmail = parsedLeadData.lead_email && parsedLeadData.lead_email.includes('@');
+              const isInterested = parsedLeadData.interest_level && parsedLeadData.interest_level !== 'faible';
+              const wantsNextStep = parsedLeadData.preferred_next_step && 
+                                  parsedLeadData.preferred_next_step !== 'juste_exploration';
+              
+              if (hasEmail || isInterested || wantsNextStep) {
+                console.log('Lead data is qualified, calling save-qualified-lead...');
+                
+                // Call save-qualified-lead edge function
+                const { data: leadResponse, error: leadError } = await supabase.functions.invoke(
+                  'save-qualified-lead',
+                  {
+                    body: parsedLeadData
+                  }
+                );
+                
+                if (leadError) {
+                  console.error('Error saving lead:', leadError);
+                } else if (leadResponse?.lead_id) {
+                  leadId = leadResponse.lead_id;
+                  console.log('Lead saved successfully with ID:', leadId);
+                }
+              } else {
+                console.log('Lead data found but not qualified (no email, low interest, just exploring)');
+              }
+            }
+          } catch (error) {
+            console.error('Error parsing or saving lead data:', error);
+            // Continue execution even if parsing fails
+          }
+
+          // Update conversation with qualification data
+          const isQualified = !!leadId;
+          const qualificationData = {
+            messages: messages.length,
+            timestamp: new Date().toISOString(),
+            parsed_data_found: !!parsedLeadData,
+            lead_saved: isQualified
+          };
+          
+          await supabase
+            .from('lead_conversations')
+            .update({ 
+              is_qualified: isQualified,
+              qualification_data: qualificationData,
+              ...(leadId && { lead_id: leadId })
+            })
+            .eq('id', convId);
+          
+          // Trigger n8n webhooks for qualified conversation
+          if (isQualified) {
             const { data: webhooks } = await supabase
               .from('n8n_webhooks')
               .select('*')
@@ -680,8 +735,9 @@ serve(async (req) => {
                         event: 'conversation_qualified',
                         conversation_id: convId,
                         session_id: sessionId,
+                        lead_id: leadId,
                         messages_count: messages.length,
-                        last_message: fullResponse,
+                        lead_data: parsedLeadData,
                         timestamp: new Date().toISOString()
                       })
                     });
