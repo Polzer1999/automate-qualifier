@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.import-discovery-calls]
 verify_jwt = false
+
+[functions.save-qualified-lead]
+verify_jwt = false
