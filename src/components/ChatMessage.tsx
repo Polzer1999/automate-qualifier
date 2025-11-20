@@ -1,6 +1,7 @@
 import { User, Sparkles } from "lucide-react";
 import { ParritGlyph } from "./ParritGlyph";
 import { Badge } from "@/components/ui/badge";
+import ReactMarkdown from "react-markdown";
 import {
   Tooltip,
   TooltipContent,
@@ -64,10 +65,26 @@ export const ChatMessage = ({ role, content, isStreaming, referenceCalls }: Chat
             </Tooltip>
           </TooltipProvider>
         )}
-        <p className="whitespace-pre-wrap">
-          {content}
+        <div className="prose prose-sm max-w-none prose-p:my-2 prose-headings:my-2 prose-ul:my-2 prose-li:my-0 dark:prose-invert">
+          {isAssistant ? (
+            <ReactMarkdown
+              components={{
+                p: ({ children }) => <p className="whitespace-pre-wrap">{children}</p>,
+                strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                a: ({ href, children }) => (
+                  <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    {children}
+                  </a>
+                ),
+              }}
+            >
+              {content}
+            </ReactMarkdown>
+          ) : (
+            <p className="whitespace-pre-wrap">{content}</p>
+          )}
           {isStreaming && <span className="inline-block w-2 h-4 ml-1 bg-primary animate-pulse" />}
-        </p>
+        </div>
       </div>
       {!isAssistant && (
         <div className="flex-shrink-0 w-8 h-8 mt-1 rounded-full bg-muted flex items-center justify-center">

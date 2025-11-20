@@ -53,6 +53,14 @@ export const ChatInterface = () => {
     if (!message.trim() || isLoading) return;
 
     const userMessage = message.trim();
+    
+    // Detect if user chose option 1 (calendar booking)
+    const optionOnePattern = /^(option\s*)?1$/i;
+    if (optionOnePattern.test(userMessage)) {
+      // Open cal.com link immediately
+      window.open('https://go.arkel.ai/rdv-avec-Paul', '_blank');
+    }
+    
     setInput("");
     setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
     setIsLoading(true);
