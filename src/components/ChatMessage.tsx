@@ -35,7 +35,7 @@ export const ChatMessage = ({ role, content, isStreaming, referenceCalls }: Chat
       <div
         className={`max-w-[85%] rounded-2xl px-6 py-4 text-sm leading-relaxed ${
           isAssistant
-            ? "bg-transparent text-foreground font-light"
+            ? "bg-transparent text-foreground"
             : "bg-primary/10 text-foreground ml-auto border border-primary/20"
         }`}
       >
@@ -65,7 +65,7 @@ export const ChatMessage = ({ role, content, isStreaming, referenceCalls }: Chat
             </Tooltip>
           </TooltipProvider>
         )}
-        <div className="prose prose-sm max-w-none prose-p:my-2 prose-headings:my-2 prose-ul:my-2 prose-li:my-0 dark:prose-invert">
+        <div className="prose prose-sm max-w-none prose-p:my-2 prose-headings:my-2 prose-ul:my-2 prose-li:my-0 dark:prose-invert prose-strong:text-foreground prose-p:text-foreground">
           {isAssistant ? (
             <ReactMarkdown
               components={{
