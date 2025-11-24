@@ -69,7 +69,7 @@ export const ChatInterface = () => {
     const wantsBooking = bookingPatterns.some(pattern => pattern.test(userMessage));
     if (wantsBooking) {
       // Open cal.com link immediately
-      window.open('https://go.arkel.ai/rdv-avec-Paul', '_blank');
+      window.open('https://arkel.cal.com/arkel/rdv-de-15mn-avec-paul?slug=arkel&type=rdv-de-15mn-avec-paul&orgRedirection=true&overlayCalendar=true&month=2025-12', '_blank');
     }
     
     setInput("");
