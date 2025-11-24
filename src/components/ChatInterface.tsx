@@ -54,9 +54,20 @@ export const ChatInterface = () => {
 
     const userMessage = message.trim();
     
-    // Detect if user chose option 1 (calendar booking)
-    const optionOnePattern = /^(option\s*)?1$/i;
-    if (optionOnePattern.test(userMessage)) {
+    // Detect if user wants to book a meeting
+    const bookingPatterns = [
+      /prend(re|s)?\s*(un\s*)?(rendez[-\s]vous|rdv)/i,
+      /r[eé]serv(er|e)/i,
+      /booking/i,
+      /(je\s*)?(veux|souhaite|voudrais|aimerais)\s*.*(rendez[-\s]vous|rdv|meeting|r[eé]union|cr[eé]neau)/i,
+      /planifi(er|e)\s*(un\s*)?(rendez[-\s]vous|rdv|meeting|r[eé]union)/i,
+      /organis(er|e)\s*(un\s*)?(rendez[-\s]vous|rdv|meeting|r[eé]union)/i,
+      /fix(er|e)\s*(un\s*)?(rendez[-\s]vous|rdv|meeting|cr[eé]neau)/i,
+      /^(option\s*)?1$/i
+    ];
+    
+    const wantsBooking = bookingPatterns.some(pattern => pattern.test(userMessage));
+    if (wantsBooking) {
       // Open cal.com link immediately
       window.open('https://go.arkel.ai/rdv-avec-Paul', '_blank');
     }
