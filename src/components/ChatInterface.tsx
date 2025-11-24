@@ -196,13 +196,13 @@ export const ChatInterface = () => {
 
 
   return (
-    <div className="w-full max-w-3xl mx-auto flex flex-col h-[680px] frosted-glass overflow-hidden"
+    <div className="w-full max-w-3xl mx-auto flex flex-col h-[90vh] md:h-[680px] frosted-glass overflow-hidden"
       style={{
-        borderRadius: '2.5rem',
+        borderRadius: '1.5rem',
         boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05)'
       }}
     >
-      <div className="flex-1 overflow-y-auto p-10 space-y-6 scroll-smooth"
+      <div className="flex-1 overflow-y-auto p-4 md:p-10 space-y-4 md:space-y-6 scroll-smooth"
         style={{
           scrollbarWidth: 'thin',
           scrollbarColor: 'hsl(var(--primary) / 0.3) transparent'
@@ -227,16 +227,16 @@ export const ChatInterface = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={handleSubmit} className="p-6 border-t border-white/5"
+      <form onSubmit={handleSubmit} className="p-3 md:p-6 border-t border-white/5"
         style={{ backdropFilter: 'blur(10px)' }}
       >
-        <div className="flex gap-3 items-center">
+        <div className="flex gap-2 md:gap-3 items-center">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Décrivez ce que vous souhaitez simplifier, améliorer ou automatiser…"
             disabled={isLoading}
-            className="flex-1 rounded-full border-white/10 focus:ring-primary text-base py-6 px-6 bg-black/20 shadow-sm placeholder:text-primary placeholder:font-light focus:placeholder:text-primary/60 transition-all"
+            className="flex-1 rounded-full border-white/10 focus:ring-primary text-sm md:text-base py-3 px-4 md:py-6 md:px-6 bg-black/20 shadow-sm placeholder:text-primary placeholder:font-light focus:placeholder:text-primary/60 transition-all"
           />
           <VoiceRecorder 
             onTranscriptionComplete={handleTranscription}
@@ -246,9 +246,9 @@ export const ChatInterface = () => {
             type="submit"
             disabled={isLoading || !input.trim()}
             size="icon"
-            className="rounded-full w-12 h-12 flex-shrink-0 bg-primary hover:bg-primary/90 text-background hover:scale-110 active:scale-95 transition-all duration-200 shadow-lg hover:shadow-primary/20 disabled:opacity-30 disabled:hover:scale-100"
+            className="rounded-full w-10 h-10 md:w-12 md:h-12 flex-shrink-0 bg-primary hover:bg-primary/90 text-background hover:scale-110 active:scale-95 transition-all duration-200 shadow-lg hover:shadow-primary/20 disabled:opacity-30 disabled:hover:scale-100"
           >
-            <span className="text-xl font-light">→</span>
+            <span className="text-lg md:text-xl font-light">→</span>
           </Button>
         </div>
       </form>
