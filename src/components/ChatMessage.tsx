@@ -20,9 +20,21 @@ interface ChatMessageProps {
   }>;
 }
 
+// Filter out internal JSON qualification data from displayed content
+const filterInternalJson = (text: string): string => {
+  // Remove JSON blocks wrapped in markdown code blocks
+  let filtered = text.replace(/```json\s*\{[\s\S]*?\}\s*```/gi, '');
+  // Remove standalone JSON objects that look like lead qualification data
+  filtered = filtered.replace(/\[\s*\{\s*"lead_name"[\s\S]*?\}\s*\]/g, '');
+  filtered = filtered.replace(/\{\s*"lead_name"[\s\S]*?"calcom_link_clicked"[\s\S]*?\}/g, '');
+  // Clean up extra whitespace
+  filtered = filtered.replace(/\n{3,}/g, '\n\n').trim();
+  return filtered;
+};
+
 export const ChatMessage = ({ role, content, isStreaming, referenceCalls }: ChatMessageProps) => {
   const isAssistant = role === "assistant";
-
+  const displayContent = isAssistant ? filterInternalJson(content) : content;
   return (
     <div
       className={`flex gap-4 mb-6 ${
@@ -78,7 +90,7 @@ export const ChatMessage = ({ role, content, isStreaming, referenceCalls }: Chat
                 ),
               }}
             >
-              {content}
+              {displayContent}
             </ReactMarkdown>
           ) : (
             <p className="whitespace-pre-wrap">{content}</p>

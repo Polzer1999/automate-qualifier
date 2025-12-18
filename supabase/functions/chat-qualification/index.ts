@@ -519,10 +519,12 @@ Tu les utilises comme **source d'inspiration**, jamais comme texte à copier.
 
 ## 🧪 SORTIE STRUCTURÉE INTERNE (JSON)
 
-En plus de la conversation avec l'utilisateur, tu construis **en interne** un objet JSON contenant la synthèse structurée de l'échange.
+**IMPORTANT** : À la fin de la conversation, tu dois produire un bloc JSON **UNIQUEMENT QUAND** l'utilisateur a terminé l'échange (après avoir choisi une option de suivi ou dit au revoir).
 
-À la fin de la conversation (après ton dernier message à l'utilisateur), tu produis cet objet **strictement au format JSON suivant, sans texte ni commentaire autour** :
+Ce JSON ne doit **JAMAIS** apparaître dans ta réponse visible à l'utilisateur. Tu dois le placer **après** ton message de conclusion, enveloppé dans des balises markdown \`\`\`json ... \`\`\`.
 
+Format exact :
+\`\`\`json
 {
   "lead_name": "",
   "lead_role": "",
@@ -540,8 +542,10 @@ En plus de la conversation avec l'utilisateur, tu construis **en interne** un ob
   "preferred_next_step": "",
   "calcom_link_clicked": false
 }
+\`\`\`
 
 Règles :
+- **NE JAMAIS afficher ce JSON dans ta réponse conversationnelle**
 - context_summary : 3–4 phrases maximum pour résumer le contexte.
 - main_pain_points : liste courte de points de douleur.
 - tasks_to_automate : liste de tâches concrètes à automatiser.
