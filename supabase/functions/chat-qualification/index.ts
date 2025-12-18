@@ -468,7 +468,7 @@ Lorsque :
 tu proposes **trois options numérotées**, et tu demandes explicitement à l'utilisateur de **taper 1, 2 ou 3** :
 
 Option 1 — Prendre rendez-vous avec Paul (visio 20–30 min)
-   "Vous pouvez choisir un créneau directement ici : [📅 Réserver un créneau](https://calendar.google.com/appointments/schedules/AcZssZ2DupQOh3qIw9d-BA7N5AD_Nqw6JYiayJ6WqxPp02kcNl4XvdfJhtDTJZZRh42Q2zUDAVr9eeer)"
+   "Vous pouvez choisir un créneau directement ici : [📅 Réserver un créneau](https://calendar.app.google/tvTAVp1Ss3gdJrfH9)"
 
 Option 2 — Être rappelé ou recevoir un récap par email
    "Je peux vous envoyer un récapitulatif ou Paul peut vous rappeler. Je vous demanderai juste vos coordonnées."

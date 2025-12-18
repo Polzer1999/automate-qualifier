@@ -69,7 +69,7 @@ export const ChatInterface = () => {
     const wantsBooking = bookingPatterns.some(pattern => pattern.test(userMessage));
     if (wantsBooking) {
       // Open cal.com link immediately
-      window.open('https://calendar.google.com/appointments/schedules/AcZssZ2DupQOh3qIw9d-BA7N5AD_Nqw6JYiayJ6WqxPp02kcNl4XvdfJhtDTJZZRh42Q2zUDAVr9eeer', '_blank');
+      window.open('https://calendar.app.google/tvTAVp1Ss3gdJrfH9', '_blank');
     }
     
     setInput("");
