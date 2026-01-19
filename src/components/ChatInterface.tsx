@@ -1,10 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChatMessage } from "./ChatMessage";
 import { ChatHeader } from "./ChatHeader";
-import { VoiceRecorder } from "./VoiceRecorder";
 
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from "uuid";
@@ -188,11 +186,6 @@ export const ChatInterface = () => {
     await sendMessage(input);
   };
 
-  const handleTranscription = (text: string) => {
-    setInput(text);
-    // Auto-send the transcribed message
-    sendMessage(text);
-  };
 
 
   return (
@@ -237,10 +230,6 @@ export const ChatInterface = () => {
             placeholder="Décrivez ce que vous souhaitez simplifier, améliorer ou automatiser…"
             disabled={isLoading}
             className="flex-1 rounded-full border-white/10 focus:ring-primary text-sm md:text-base py-3 px-4 md:py-6 md:px-6 bg-black/20 shadow-sm placeholder:text-primary placeholder:font-light focus:placeholder:text-primary/60 transition-all"
-          />
-          <VoiceRecorder 
-            onTranscriptionComplete={handleTranscription}
-            disabled={isLoading}
           />
           <Button
             type="submit"
