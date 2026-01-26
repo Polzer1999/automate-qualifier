@@ -107,25 +107,6 @@ export const ChatInterface = () => {
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
-      const duration = Date.now() - (recordingStartTimeRef.current || 0);
-
-      if (duration < 1000) {
-        toast({
-          title: "Enregistrement trop court",
-          description: "Maintenez le bouton appuyé au moins une seconde.",
-          variant: "destructive",
-        });
-
-        const recorder = mediaRecorderRef.current;
-        recorder.ondataavailable = null;
-        recorder.onstop = null;
-        recorder.stop();
-        setIsRecording(false);
-        recordingStartTimeRef.current = null;
-        chunksRef.current = [];
-        return;
-      }
-
       if (mediaRecorderRef.current.state === 'recording') {
         mediaRecorderRef.current.requestData();
       }
@@ -138,6 +119,17 @@ export const ChatInterface = () => {
 
       setIsRecording(false);
       recordingStartTimeRef.current = null;
+    }
+  };
+
+  // Toggle recording on click (clic simple)
+  const handleVoiceClick = () => {
+    if (isLoading || isTranscribing) return;
+
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
     }
   };
 
@@ -179,27 +171,6 @@ export const ChatInterface = () => {
     }
   };
 
-  const handleVoiceMouseDown = () => {
-    if (!isLoading && !isTranscribing) {
-      startRecording();
-    }
-  };
-
-  const handleVoiceMouseUp = () => {
-    if (isRecording) {
-      stopRecording();
-    }
-  };
-
-  const handleVoiceTouchStart = (e: React.TouchEvent) => {
-    e.preventDefault();
-    handleVoiceMouseDown();
-  };
-
-  const handleVoiceTouchEnd = (e: React.TouchEvent) => {
-    e.preventDefault();
-    handleVoiceMouseUp();
-  };
 
   // ============ IMAGE UPLOAD ============
   const handleImageSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -481,17 +452,13 @@ export const ChatInterface = () => {
             <ImagePlus className="w-5 h-5" />
           </Button>
 
-          {/* Voice recording button */}
+          {/* Voice recording button - clic simple */}
           <Button
             type="button"
             variant="ghost"
             size="icon"
             disabled={isLoading || isTranscribing}
-            onMouseDown={handleVoiceMouseDown}
-            onMouseUp={handleVoiceMouseUp}
-            onMouseLeave={handleVoiceMouseUp}
-            onTouchStart={handleVoiceTouchStart}
-            onTouchEnd={handleVoiceTouchEnd}
+            onClick={handleVoiceClick}
             className={`rounded-full w-10 h-10 md:w-11 md:h-11 flex-shrink-0 transition-all ${
               isRecording
                 ? 'bg-destructive text-destructive-foreground animate-pulse scale-110'
@@ -499,7 +466,7 @@ export const ChatInterface = () => {
                   ? 'text-primary'
                   : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
             }`}
-            title="Maintenez pour parler (min. 1s)"
+            title={isRecording ? "Cliquez pour arrêter" : "Cliquez pour parler"}
           >
             {isTranscribing ? (
               <Loader2 className="w-5 h-5 animate-spin" />
