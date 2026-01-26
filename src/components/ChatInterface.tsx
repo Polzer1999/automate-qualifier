@@ -503,12 +503,15 @@ export const ChatInterface = () => {
 
         {/* Recording indicator */}
         {isRecording && (
-          <div className="mt-2 flex items-center justify-center gap-2 text-xs text-destructive animate-pulse">
-            <span className="w-2 h-2 bg-destructive rounded-full" />
-            Enregistrement en cours...
-          </div>
-        )}
-      </form>
-    </div>
+         <div className="py-2 px-4 text-center border-t border-white/5">
+        
+          href="https://docs.google.com/document/d/1q6Pq_KgNOZAkn1fE7WwD-phGn_26HVU_/edit"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+        >
+          Mentions légales
+        </a>
+      </div>
   );
 };
