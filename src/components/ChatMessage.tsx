@@ -12,6 +12,7 @@ import {
 interface ChatMessageProps {
   role: "user" | "assistant";
   content: string;
+  images?: string[];
   isStreaming?: boolean;
   referenceCalls?: Array<{
     entreprise: string;
@@ -32,9 +33,10 @@ const filterInternalJson = (text: string): string => {
   return filtered;
 };
 
-export const ChatMessage = ({ role, content, isStreaming, referenceCalls }: ChatMessageProps) => {
+export const ChatMessage = ({ role, content, images, isStreaming, referenceCalls }: ChatMessageProps) => {
   const isAssistant = role === "assistant";
   const displayContent = isAssistant ? filterInternalJson(content) : content;
+
   return (
     <div
       className={`flex gap-4 mb-6 ${
@@ -51,6 +53,7 @@ export const ChatMessage = ({ role, content, isStreaming, referenceCalls }: Chat
             : "bg-primary/10 text-foreground ml-auto border border-primary/20"
         }`}
       >
+        {/* Reference calls badge for assistant messages */}
         {isAssistant && referenceCalls && referenceCalls.length > 0 && (
           <TooltipProvider>
             <Tooltip delayDuration={200}>
@@ -77,6 +80,22 @@ export const ChatMessage = ({ role, content, isStreaming, referenceCalls }: Chat
             </Tooltip>
           </TooltipProvider>
         )}
+
+        {/* Images for user messages */}
+        {!isAssistant && images && images.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {images.map((img, idx) => (
+              <img
+                key={idx}
+                src={img}
+                alt={`Image ${idx + 1}`}
+                className="max-w-[200px] max-h-[150px] rounded-lg object-cover border border-white/10"
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Message content */}
         <div className="prose prose-sm max-w-none prose-p:my-2 prose-headings:my-2 prose-ul:my-2 prose-li:my-0 dark:prose-invert prose-strong:text-foreground prose-p:text-foreground">
           {isAssistant ? (
             <ReactMarkdown
