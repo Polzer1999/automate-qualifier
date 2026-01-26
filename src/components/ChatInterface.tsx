@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 interface Message {
   role: "user" | "assistant";
   content: string;
-  images?: string[]; // Base64 images
+  images?: string[];
   referenceCalls?: Array<{
     entreprise: string;
     secteur: string;
@@ -39,7 +39,6 @@ export const ChatInterface = () => {
   const [streamingMessage, setStreamingMessage] = useState("");
   const { toast } = useToast();
 
-  // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -47,7 +46,6 @@ export const ChatInterface = () => {
   const recordingStartTimeRef = useRef<number | null>(null);
   const mimeTypeRef = useRef<string>('audio/webm');
 
-  // Image upload state
   const [pendingImages, setPendingImages] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -59,7 +57,6 @@ export const ChatInterface = () => {
     scrollToBottom();
   }, [messages, streamingMessage]);
 
-  // ============ VOICE RECORDING ============
   const getSupportedMimeType = () => {
     const types = ['audio/webm', 'audio/mp4', 'audio/ogg'];
     for (const type of types) {
@@ -122,7 +119,6 @@ export const ChatInterface = () => {
     }
   };
 
-  // Toggle recording on click (clic simple)
   const handleVoiceClick = () => {
     if (isLoading || isTranscribing) return;
 
@@ -171,8 +167,6 @@ export const ChatInterface = () => {
     }
   };
 
-
-  // ============ IMAGE UPLOAD ============
   const handleImageSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
@@ -187,7 +181,7 @@ export const ChatInterface = () => {
         return;
       }
 
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      if (file.size > 10 * 1024 * 1024) {
         toast({
           title: "Fichier trop volumineux",
           description: "La taille maximum est de 10 Mo.",
@@ -203,7 +197,6 @@ export const ChatInterface = () => {
       reader.readAsDataURL(file);
     });
 
-    // Reset input for re-selection
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -217,13 +210,11 @@ export const ChatInterface = () => {
     fileInputRef.current?.click();
   };
 
-  // ============ SEND MESSAGE ============
   const sendMessage = async (message: string, images?: string[]) => {
     if ((!message.trim() && (!images || images.length === 0)) || isLoading) return;
 
     const userMessage = message.trim();
 
-    // Detect booking intent
     const bookingPatterns = [
       /prend(re|s)?\s*(un\s*)?(rendez[-\s]vous|rdv)/i,
       /r[eé]serv(er|e)/i,
@@ -251,7 +242,6 @@ export const ChatInterface = () => {
     setStreamingMessage("");
 
     try {
-      // Build message content with images
       let messageContent = userMessage;
       if (images && images.length > 0) {
         messageContent = `${userMessage}\n\n[L'utilisateur a joint ${images.length} image(s) à analyser]`;
@@ -269,7 +259,7 @@ export const ChatInterface = () => {
             conversationId,
             sessionId,
             message: messageContent,
-            images: images, // Pass images to backend for vision processing
+            images: images,
           }),
         }
       );
@@ -287,7 +277,7 @@ export const ChatInterface = () => {
       const decoder = new TextDecoder();
       let buffer = "";
       let currentMessage = "";
-      let referenceCalls: any[] = [];
+      let referenceCalls: Array<{ entreprise: string; secteur: string; phase: string }> = [];
 
       while (true) {
         const { done, value } = await reader.read();
@@ -318,13 +308,12 @@ export const ChatInterface = () => {
               currentMessage += content;
               setStreamingMessage(currentMessage);
             }
-          } catch (e) {
+          } catch {
             // Ignore parse errors
           }
         }
       }
 
-      // Flush remaining buffer
       if (buffer.trim() && buffer.trim() !== "data: [DONE]") {
         try {
           const line = buffer.trim();
@@ -335,7 +324,7 @@ export const ChatInterface = () => {
               currentMessage += content;
             }
           }
-        } catch (e) {
+        } catch {
           // Ignore
         }
       }
@@ -376,7 +365,6 @@ export const ChatInterface = () => {
         boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05)'
       }}
     >
-      {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 md:p-10 space-y-4 md:space-y-6 scroll-smooth"
         style={{
           scrollbarWidth: 'thin',
@@ -403,7 +391,6 @@ export const ChatInterface = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Image Preview Area */}
       {pendingImages.length > 0 && (
         <div className="px-3 md:px-6 py-2 border-t border-white/5 flex gap-2 overflow-x-auto">
           {pendingImages.map((img, idx) => (
@@ -424,12 +411,10 @@ export const ChatInterface = () => {
         </div>
       )}
 
-      {/* Input Area */}
       <form onSubmit={handleSubmit} className="p-3 md:p-6 border-t border-white/5"
         style={{ backdropFilter: 'blur(10px)' }}
       >
         <div className="flex gap-2 md:gap-3 items-center">
-          {/* Hidden file input */}
           <input
             ref={fileInputRef}
             type="file"
@@ -439,7 +424,6 @@ export const ChatInterface = () => {
             className="hidden"
           />
 
-          {/* Image upload button */}
           <Button
             type="button"
             variant="ghost"
@@ -452,7 +436,6 @@ export const ChatInterface = () => {
             <ImagePlus className="w-5 h-5" />
           </Button>
 
-          {/* Voice recording button - clic simple */}
           <Button
             type="button"
             variant="ghost"
@@ -477,16 +460,14 @@ export const ChatInterface = () => {
             )}
           </Button>
 
-          {/* Text input */}
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Décrivez ce que vous souhaitez simplifier…"
+            placeholder="Décrivez ce que vous souhaitez simplifier..."
             disabled={isLoading}
             className="flex-1 rounded-full border-white/10 focus:ring-primary text-sm md:text-base py-3 px-4 md:py-6 md:px-6 bg-black/20 shadow-sm placeholder:text-muted-foreground placeholder:font-light focus:placeholder:text-muted-foreground/60 transition-all"
           />
 
-          {/* Send button */}
           <Button
             type="submit"
             disabled={!canSend}
@@ -501,10 +482,16 @@ export const ChatInterface = () => {
           </Button>
         </div>
 
-        {/* Recording indicator */}
         {isRecording && (
-         <div className="py-2 px-4 text-center border-t border-white/5">
-        
+          <div className="mt-2 flex items-center justify-center gap-2 text-xs text-destructive animate-pulse">
+            <span className="w-2 h-2 bg-destructive rounded-full" />
+            Enregistrement en cours...
+          </div>
+        )}
+      </form>
+
+      <div className="py-2 px-4 text-center border-t border-white/5">
+        <a
           href="https://docs.google.com/document/d/1q6Pq_KgNOZAkn1fE7WwD-phGn_26HVU_/edit"
           target="_blank"
           rel="noopener noreferrer"
@@ -513,5 +500,7 @@ export const ChatInterface = () => {
           Mentions légales
         </a>
       </div>
+    </div>
   );
 };
+
