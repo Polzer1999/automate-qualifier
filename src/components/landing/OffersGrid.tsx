@@ -10,6 +10,10 @@ interface Offer {
   description: string;
   badge?: string;
   cta: string;
+  bullets?: string[];
+  steps?: string[];
+  examples?: string[];
+  mention?: string;
 }
 
 const offers: Offer[] = [
@@ -17,31 +21,50 @@ const offers: Offer[] = [
     id: "sap",
     icon: Bot,
     title: "Chatbot SAP",
-    description: "Votre assistant IA connecté à SAP",
-    badge: "Bêta",
-    cta: "Devenir testeur",
+    description: "Assistant IA pour utilisateurs et consultants SAP",
+    badge: "Accès Bêta",
+    cta: "Demander l'accès",
+    bullets: [
+      "Déploiement on-premise ou test cloud disponible",
+      "Architecture, transactions, support fonctionnel",
+    ],
   },
   {
     id: "growth",
     icon: Rocket,
-    title: "Growth Machine",
-    description: "Des leads qualifiés dans votre pipeline",
+    title: "Prospection Signaux d'Intention",
+    description: "Remplissez votre pipeline de RDV qualifiés",
     badge: "5K€",
     cta: "Découvrir",
+    steps: [
+      "Sélectionnez vos sources de données",
+      "Décrivez votre ICP",
+      "Recevez des leads chauds dans votre pipeline",
+    ],
+    mention: "Coaching acquisition inclus",
   },
   {
     id: "custom",
     icon: Puzzle,
-    title: "Projets Sur-mesure",
-    description: "IA & automatisation pilotés de A à Z",
-    cta: "Discutons",
+    title: "Projets Agentiques",
+    description: "IA & Automatisation sur-mesure, pilotés de A à Z",
+    cta: "Prendre RDV",
+    examples: [
+      "Remplissage auto de catalogue (maison de ventes aux enchères)",
+      "Automatisation ouverture de franchises (bail, juridique, process)",
+    ],
   },
   {
     id: "formation",
     icon: GraduationCap,
-    title: "Formation",
-    description: "Formez vos équipes à l'IA et l'automatisation",
+    title: "Formation & Prise de parole",
+    description: "Éveillez les consciences, actionnez le change management",
     cta: "En savoir plus",
+    bullets: [
+      "Formation : déployer agents & automatisations par métier",
+      "Masterclass : de l'IA générative à l'agentique",
+      "Accompagnement change management",
+    ],
   },
 ];
 
@@ -66,6 +89,10 @@ export const OffersGrid = () => {
               description={offer.description}
               badge={offer.badge}
               cta={offer.cta}
+              bullets={offer.bullets}
+              steps={offer.steps}
+              examples={offer.examples}
+              mention={offer.mention}
               onClick={() => handleCardClick(offer)}
             />
           ))}
